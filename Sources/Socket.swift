@@ -21,6 +21,8 @@ public class Socket: WebSocketDelegate {
 
     var heartbeatTimer = Timer()
     let heartbeatDelay = 30.0
+    
+    public var onClose: ((Socket, NSError?) -> Void)?
 
     var messageReference: UInt64 = UInt64.min // 0 (max: 18,446,744,073,709,551,615)
 
@@ -122,9 +124,13 @@ public class Socket: WebSocketDelegate {
      Starts reconnect timer onClose
      - parameter event: String event name
      */
-    func onClose(event: String) {
+    func onClose(event: String, error: NSError? = nil) {
         reconnectTimer.invalidate()
         reconnectTimer = Timer.scheduledTimer(timeInterval: reconnectAfterMs, target: self, selector: #selector(reconnect), userInfo: nil, repeats: true)
+        
+        if let callback = self.onClose {
+            callback(self, error)
+        }
     }
 
     /**
@@ -280,10 +286,10 @@ public class Socket: WebSocketDelegate {
       Logger.debug(message: "got some data: \(data.count)")
     }
 
-    public func websocketDidDisconnect(socket: WebSocketClient, error: Error?) {
+    public func websocketDidDisconnect(socket: WebSocketClient, error: NSError?) {
         if let err = error { onError(error: err as NSError) }
         Logger.debug(message: "socket closed: \(error?.localizedDescription ?? "Unknown error")")
-        onClose(event: "reason: \(error?.localizedDescription ?? "Unknown error")")
+        onClose(event: "reason: \(error?.localizedDescription ?? "Unknown error")", error:error))
     }
 
     public func websocketDidConnect(socket: WebSocketClient) {
