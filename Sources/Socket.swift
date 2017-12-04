@@ -149,7 +149,7 @@ public class Socket: WebSocketDelegate {
      Indicates if connection is established
      - returns: Bool
      */
-    func isConnected() -> Bool {
+    public func isConnected() -> Bool {
         if let connection = self.conn {
             return connection.isConnected
         } else {
